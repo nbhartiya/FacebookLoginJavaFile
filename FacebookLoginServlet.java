@@ -26,7 +26,6 @@ import org.scribe.oauth.OAuthService;
 import com.gwu.common.GwuParameters;
 import com.gwu.common.Logs;
 import com.gwu.dao.contentlibrary.WordListDAO;
-import com.gwu.dao.course.CourseDAO;
 import com.gwu.dao.games.GameRequestDao;
 import com.gwu.dao.user.UserDAO;
 
@@ -70,23 +69,10 @@ public class FacebookLoginServlet extends HttpServlet {
 		}
 		else if(reqType.endsWith("fbloginforgame")){
 			fbLoginForGame(request, response);
-		}else if(reqType.endsWith("gotCourse")){
-			try {
-				gotCourseId(request, response);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}else if(reqType.endsWith("gotEmailId")){
-			try {
-				gotEmailId(request, response);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 		}
-		
-		
+		else if(reqType.contentEquals("fbloginfromJS")){
+			facebookSignInFromJavaScript(request, response);
+		}
 	}
 
 	protected void facebookAuthentication(HttpServletRequest request,
@@ -97,7 +83,7 @@ public class FacebookLoginServlet extends HttpServlet {
 		ResourceBundle bundle = ResourceBundle.getBundle("facebook_config");
 		String apikey = bundle.getString("app.key");
 		String secret = bundle.getString("app.secret");
-		String scope = "email";
+		String scope = "email,read_stream";
 		String url = request.getScheme() + "://" + request.getServerName()
 				+ ":" + request.getServerPort() + request.getContextPath()
 				+ "/" + bundle.getString("app.callback");
@@ -108,6 +94,8 @@ public class FacebookLoginServlet extends HttpServlet {
 					.apiSecret(secret).callback(url).scope(scope).build();
 
 			String authorizationUrl = service.getAuthorizationUrl(EMPTY_TOKEN);
+			
+			System.out.println("authorizationUrl: " + authorizationUrl);
 
 			HttpSession session = request.getSession();
 
@@ -125,9 +113,6 @@ public class FacebookLoginServlet extends HttpServlet {
 	protected void facebookSignIn(HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
 		response.setContentType("text/html");
-		
-		HttpSession session = request.getSession();
-		
 		String code = request.getParameter("code")==null?"":request.getParameter("code");
 		try {
 			if(code.equals("")){
@@ -135,49 +120,16 @@ public class FacebookLoginServlet extends HttpServlet {
 				dispatcher.forward(request, response);
 			}
 			else{
-				
-				OAuthService service = null;
-				
-				if(request.getSession() == null){
-					System.out.println("Session is null");
-				}else if(request.getSession().getAttribute("facebookService") == null){
-					System.out.println("facebook service is null");
-		
-					ResourceBundle bundle = ResourceBundle.getBundle("facebook_config");
-					String apikey = bundle.getString("app.key");
-					String secret = bundle.getString("app.secret");
-					String scope = "email";
-
-					String url = request.getScheme() + "://" + request.getServerName()
-							+ ":" + request.getServerPort() + request.getContextPath()
-							+ "/" + bundle.getString("app.callback");
-
-					
-					service = new ServiceBuilder()
-					.provider(FacebookApi.class).apiKey(apikey)
-					.apiSecret(secret).callback(url).scope(scope).build();
-
-					
-				}else{					
-					service = (OAuthService) request.getSession()
-							.getAttribute("facebookService");
-				}
-				
-				if(service == null)
-					service = (OAuthService) request.getSession()
-					.getAttribute("facebookService");
-
-				
-				Verifier verifier = new Verifier(code);
 								
+				OAuthService service = (OAuthService) request.getSession()
+				.getAttribute("facebookService");
+				Verifier verifier = new Verifier(code);
+				
 				Token accessToken = service.getAccessToken(EMPTY_TOKEN, verifier);
 				OAuthRequest req = new OAuthRequest(Verb.GET,
 						PROTECTED_RESOURCE_URL);
 				service.signRequest(accessToken, req);
 				Response res = req.send();
-				System.out.println("facebookSignIn response body: " + res.getBody());
-				// response.getWriter().write(res.getBody()+"<hr/>");
-		
 				JSONArray array = new JSONArray("[" + res.getBody() + "]");
 		
 				for (int i = 0; i < array.length(); i++) {
@@ -186,7 +138,7 @@ public class FacebookLoginServlet extends HttpServlet {
 					if(jsonObject.has("username"))
 							facebookId = jsonObject.getString("username");
 					else 
-						facebookId = "";
+						facebookId = null;
 					
 					timeZone = jsonObject.getString("timezone");
 					
@@ -203,9 +155,7 @@ public class FacebookLoginServlet extends HttpServlet {
 										
 				}
 		
-				
-				request.getSession().removeAttribute("facebookService");	
-				
+				request.getSession().removeAttribute("facebookService");
 				String fbtz = request.getSession().getAttribute("fbtz")==null?"":request.getSession().getAttribute("fbtz").toString();
 				request.getSession().removeAttribute("fbtz");
 				if (email != null) {
@@ -223,42 +173,20 @@ public class FacebookLoginServlet extends HttpServlet {
 							dispatcher.forward(request, response);
 						}
 						else{
-													
+							
 							response.sendRedirect("loginbyfacebook.action?facebookId="
 									+ facebookId + "&fbTimeZone=" + timeZone + "&emailId=" + email
 									+ "&firstName=" + firstName + "&lastName=" + lastName + "&direct=direct&fbtz="+fbtz+"&cLinkFromCookie=" + cLinkFromCookie);
-						
+
 						}
 					} else {
-						
-						
-						session.setAttribute("facebookId",facebookId);
-						session.setAttribute("fbTimeZone", timeZone);
-						session.setAttribute("emailId", email);
-						session.setAttribute("firstName", firstName);
-						session.setAttribute("lastName", lastName);
-						session.setAttribute("fbtz", fbtz);
-						session.setAttribute("cLinkFromCookie", cLinkFromCookie);
-						
-						response.sendRedirect("chooseLanguageForSignUp.jsp?chooseCourse=Facebook");	
+						response.sendRedirect("updatefacebookId.action?facebookId="
+								+ facebookId + "&fbTimeZone=" + timeZone + "&emailId=" + email
+								+ "&firstName=" + firstName + "&lastName=" + lastName + "&direct=direct&fbtz="+fbtz+"&cLinkFromCookie=" + cLinkFromCookie);
 						
 					}
 				} else {
-					
-					System.out.println("*************************************************************");
-					System.out.println("-----------------Tried facebook login------------------------");
-					System.out.println("-----------------But no email found------------------------");
-					System.out.println("*************************************************************");
-					
-					session.setAttribute("facebookId",facebookId);
-					session.setAttribute("fbTimeZone", timeZone);
-					session.setAttribute("firstName", firstName);
-					session.setAttribute("lastName", lastName);
-					session.setAttribute("fbtz", fbtz);
-					session.setAttribute("cLinkFromCookie", cLinkFromCookie);
-
-					
-					response.sendRedirect("getEmail.jsp");
+					response.sendRedirect("index.jsp?facebookSigninFailure=noEmail");
 				}
 			}
 		} catch (Exception e) {
@@ -268,125 +196,57 @@ public class FacebookLoginServlet extends HttpServlet {
 
 	}
 	
-	protected void gotCourseId(HttpServletRequest request,
-			HttpServletResponse response) throws Exception {
-		
-		try{
-			
-			HttpSession session = request.getSession();
-			
-			String facebookId = session.getAttribute("facebookId").toString();
-			String timeZone = session.getAttribute("fbTimeZone").toString();
-			String email = session.getAttribute("emailId").toString();
-			String firstName = session.getAttribute("firstName").toString();
-			String lastName = session.getAttribute("lastName").toString();
-			String fbtz = session.getAttribute("fbtz").toString();
-			String cLinkFromCookie = session.getAttribute("cLinkFromCookie").toString();
-			
-			int courseId=0;
-			
-			String courseValue = "not defined";			
-			//getting course ID
-			courseId = Integer.parseInt(request.getParameter("courseId").toString());
-			
-			if(courseId > 0){
-				CourseDAO courseDao = new CourseDAO();
-				try {
-					courseValue = courseDao.getCourseNameById(courseId);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
-
-			
-			session.setAttribute("facebook_courseValue", courseValue);
-			
-			
-			response.sendRedirect("updatefacebookId.action?facebookId="
-					+ facebookId + "&fbTimeZone=" + timeZone + "&emailId=" + email
-					+ "&firstName=" + firstName + "&lastName=" + lastName + "&direct=direct&fbtz="+fbtz+"&cLinkFromCookie=" + cLinkFromCookie+"&courseId="+courseId+"&&courseValue="+courseValue);
-			 			
-		} catch (Exception e) {
-			e.printStackTrace();
-		
-		}
-	}
 	
-	protected void gotEmailId(HttpServletRequest request,
-			HttpServletResponse response) throws Exception {
-		
-		try{
-			
-			HttpSession session = request.getSession();
-			
-			String facebookId = "";
-			
-			if(session.getAttribute("facebookId") != null)
-				facebookId = session.getAttribute("facebookId").toString();
-			else {
-				response.sendRedirect("index.jsp?notValidRequest");
-				return;
-			}
-
-			String timeZone = session.getAttribute("fbTimeZone").toString();
-			String firstName = session.getAttribute("firstName").toString();
-			String lastName = session.getAttribute("lastName").toString();
-			String fbtz = session.getAttribute("fbtz").toString();
-			String cLinkFromCookie = session.getAttribute("cLinkFromCookie").toString();
-			
-			String email=null;
-			
-			//getting Email ID
-			if(request.getParameter("emailId") != null)
-				email = request.getParameter("emailId").toString();
-			else
-				email = null;
-			
-			if (email != null) {
-				UserDAO dao = new UserDAO();
-	
-				if (dao.isUserExist(email)) {
-					if(email.equals("")){
-						request.setAttribute("firstName", firstName);
-						request.setAttribute("lastName", lastName);
-						request.setAttribute("facebookId", facebookId);
-						request.setAttribute("faceBookLogin", "Yes");
-						RequestDispatcher dispatcher = request.getRequestDispatcher("index.jsp");
-						dispatcher.forward(request, response);
-					}
-					else{												
-						response.sendRedirect("loginbyfacebook.action?facebookId="
-								+ facebookId + "&fbTimeZone=" + timeZone + "&emailId=" + email
-								+ "&firstName=" + firstName + "&lastName=" + lastName + "&direct=direct&fbtz="+fbtz+"&cLinkFromCookie=" + cLinkFromCookie);
-					
-					}
-				} else {
-					
-					
-					session.setAttribute("facebookId",facebookId);
-					session.setAttribute("fbTimeZone", timeZone);
-					session.setAttribute("emailId", email);
-					session.setAttribute("firstName", firstName);
-					session.setAttribute("lastName", lastName);
-					session.setAttribute("fbtz", fbtz);
-					session.setAttribute("cLinkFromCookie", cLinkFromCookie);
-					
-					response.sendRedirect("chooseLanguageForSignUp.jsp?chooseCourse=Facebook");	
-					
-				}
-			} else {
+	protected void facebookSignInFromJavaScript(HttpServletRequest request,
+			HttpServletResponse response) throws IOException{
 				
-				response.sendRedirect("index.jsp?facebookSigninFailure=noEmail");
-			}
-			 			
-		} catch (Exception e) {
-			e.printStackTrace();
+		String facebookId = null;
+		String userName = null;
+		String email = null;
+		String firstName = null;
+		String lastName = null;
+		String fbtz = null;
+		String currentTime = null;
+		String facebookAccessToken = null;
+		String facebookSignedRequest= null;
+		String facebookTokenExpiresIn = null;
+		String cLinkFromCookie = "userDashboard.jsp";
 		
+		//getting data from request
+		if(request.getParameter("facebookId")!= null)
+			facebookId = (String) request.getParameter("facebookId");
+		if(request.getParameter("userName")!= null)
+			userName = (String) request.getParameter("userName");
+		if(request.getParameter("email")!= null)
+			email = (String) request.getParameter("email");
+		if(request.getParameter("firstName")!= null)
+			firstName = (String) request.getParameter("firstName");
+		if(request.getParameter("lastName")!= null)
+			lastName = (String) request.getParameter("lastName");
+		if(request.getParameter("timeZone")!= null)
+			fbtz = (String) request.getParameter("timeZone");
+		if(request.getParameter("currentTime")!= null)
+			currentTime = (String) request.getParameter("currentTime");
+		System.out.println("time: " + currentTime);
+		if(request.getParameter("facebookAccessToken")!= null)
+			facebookAccessToken = (String) request.getParameter("facebookAccessToken");
+		if(request.getParameter("facebookSignedRequest")!= null)
+			facebookSignedRequest= (String) request.getParameter("facebookSignedRequest");
+		if(request.getParameter("facebookTokenExpiresIn")!= null)
+			facebookTokenExpiresIn = request.getParameter("facebookTokenExpiresIn");
+		if(request.getParameter("clLink")!= null)
+			cLinkFromCookie = (String) request.getParameter("clLink");
+
+		if(email != null) {
+			response.sendRedirect("updatefacebookId.action?facebookId="
+					+ userName + "&fbTimeZone=" + timeZone + "&emailId=" + email
+					+ "&firstName=" + firstName + "&lastName=" + lastName + "&direct=direct&fbtz="+fbtz
+					+"&cLinkFromCookie=" + cLinkFromCookie+"&fb_uid=" + facebookId+"&facebookAccessToken=" + facebookAccessToken
+					+"&facebookSignedRequest=" + facebookSignedRequest+"&facebookTokenExpiresIn=" + facebookTokenExpiresIn);
+		} else {
+			response.sendRedirect("index.jsp?facebookSigninFailure=noEmailFormFB");
 		}
 	}
-	
 	
 	protected void fbGameAuthentication(HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
