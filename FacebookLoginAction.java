@@ -18,12 +18,12 @@ import com.gwu.dao.course.CourseDAO;
 import com.gwu.dao.student.StudentDAO;
 import com.gwu.dao.tutor.TutorDAO;
 import com.gwu.dao.user.UserDAO;
+import com.gwu.entities.ScoreBoard.TblScoreBoard;
 import com.gwu.entities.student.TblStudent;
 import com.gwu.entities.tutor.TblTutor;
 import com.gwu.entities.user.TblLoginHistory;
 import com.gwu.entities.user.TblUser;
 import com.gwu.entities.user.TblUserType;
-import com.gwu.entities.ScoreBoard.TblScoreBoard;
 import com.gwu.security.EncryptDecrypt;
 import com.opensymphony.xwork2.ActionSupport;
 
@@ -34,8 +34,62 @@ public class FacebookLoginAction extends ActionSupport {
 	private String emailId;
 	private String firstName;
 	private String lastName;
-	private String fbtz;
+	private String fbtz;	
+	private String userName = null;
+	private String fb_uid = null;
+	private String currentTime = null;
+	private String facebookAccessToken = null;
+	private String facebookSignedRequest= null;
+	private Long facebookTokenExpiresIn = null;
 
+	
+	public String getFb_uid() {
+		return fb_uid;
+	}
+
+	public void setFb_uid(String fb_uid) {
+		this.fb_uid = fb_uid;
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public String getCurrentTime() {
+		return currentTime;
+	}
+
+	public void setCurrentTime(String currentTime) {
+		this.currentTime = currentTime;
+	}
+
+	public String getFacebookAccessToken() {
+		return facebookAccessToken;
+	}
+
+	public void setFacebookAccessToken(String facebookAccessToken) {
+		this.facebookAccessToken = facebookAccessToken;
+	}
+
+	public String getFacebookSignedRequest() {
+		return facebookSignedRequest;
+	}
+
+	public void setFacebookSignedRequest(String facebookSignedRequest) {
+		this.facebookSignedRequest = facebookSignedRequest;
+	}
+
+	public Long getFacebookTokenExpiresIn() {
+		return facebookTokenExpiresIn;
+	}
+
+	public void setFacebookTokenExpiresIn(Long facebookTokenExpiresIn) {
+		this.facebookTokenExpiresIn = facebookTokenExpiresIn;
+	}
 
 	public String twitterSignIn() throws Exception {
 		return SUCCESS;
@@ -60,15 +114,9 @@ public class FacebookLoginAction extends ActionSupport {
 		String siteUrl = "";
 		String clLink = "index.jsp?opencl=yes";
 		String cLinkFromCookie = request.getParameter("cLinkFromCookie");
-		String courseValue = "not defined";
-		
-		if(request.getParameter("courseValue") != null)
-			courseValue = request.getParameter("courseValue");
 		
 		if(cLinkFromCookie != null)
 			clLink = cLinkFromCookie;
-
-		System.out.println(clLink);
 
 		if(request.getServerPort()==80 || request.getServerPort()==443){
 			siteUrl = request.getScheme() + "://" + request.getServerName() + request.getContextPath();
@@ -78,12 +126,23 @@ public class FacebookLoginAction extends ActionSupport {
 			clLink=siteUrl+"/"+clLink;
 		}
 		
+		System.out.println("updating facebook details in user table");
+		System.out.println(fb_uid);
+		System.out.println(facebookAccessToken);
+		System.out.println(facebookSignedRequest);
+		System.out.println(facebookTokenExpiresIn);
+
 		Map<String, Integer> map = null;
 		try{
+//			map = dao.updateFacebookId(emailId, facebookId, firstName, lastName,fb_uid,facebookAccessToken,facebookSignedRequest,facebookTokenExpiresIn);
 			map = dao.updateFacebookId(emailId, facebookId, firstName, lastName);
 		}catch (Exception e) {
+//			map = dao.updateFacebookId(emailId, facebookId, "", "",fb_uid,facebookAccessToken,facebookSignedRequest,facebookTokenExpiresIn);
 			map = dao.updateFacebookId(emailId, facebookId, "", "");
 		}
+		
+		System.out.println("successfully updated facebook details in user table");
+		
 		int iUserID = 0;
 		int isActive = 0;
 		int iTypeId = 0;
@@ -211,6 +270,14 @@ public class FacebookLoginAction extends ActionSupport {
 					
 				}
 			}else {
+				
+				System.out.println("Adding row in database for new users");
+				System.out.println(fb_uid);
+				System.out.println(facebookAccessToken);
+				System.out.println(facebookSignedRequest);
+				System.out.println(facebookTokenExpiresIn);
+				
+				
 				boolean exists = dao.isUserExist(emailId);
 				if(exists){
 					/*addActionError("Oops. Username and password do not match. Please retry.");*/
@@ -221,19 +288,18 @@ public class FacebookLoginAction extends ActionSupport {
 					ScoreBoardDAO scoreBoardDAO = new ScoreBoardDAO();
 					InviteDAO inviteDAO = new InviteDAO();
 					int courseId = 0;
-					
-					courseId = Integer.parseInt(request.getParameter("courseId"));
-					
 					String contains = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 					String password1 = EncryptDecrypt.getMessageDigest(EncryptDecrypt.getRandomAlphaNumericString(contains, 6).getBytes());
 					session.setAttribute("newregistration", emailId);
 					String name = "";
 					try{
 						TblUser user = new TblUser(emailId, password1, 1,TblUserType.USER_STUDENT);
-						TblStudent student = new TblStudent(emailId, user, courseId, firstName, lastName, facebookId, fbtz);
+//						TblStudent student = new TblStudent(emailId, user, courseId, firstName, lastName, facebookId, fbtz,fb_uid,facebookAccessToken,facebookSignedRequest,facebookTokenExpiresIn);
+						TblStudent student = new TblStudent(emailId, user, courseId, firstName, lastName, facebookId, fbtz);												
 						name = (firstName + " " + lastName).trim();
 						dao2.add(student);
 						
+						System.out.println("added row in user table");
 						TblScoreBoard tblScoreBoard = new TblScoreBoard();
 						tblScoreBoard.setUserId(user.getiUserId());
 						scoreBoardDAO.add(tblScoreBoard);
@@ -243,6 +309,7 @@ public class FacebookLoginAction extends ActionSupport {
 						System.out.println("First name and last name are not readable");
 						TblUser user = new TblUser(emailId, password1, 1,TblUserType.USER_STUDENT);
 						
+//						TblStudent student = new TblStudent(emailId, user, courseId, "", "", facebookId, fbtz,fb_uid,facebookAccessToken,facebookSignedRequest,facebookTokenExpiresIn);
 						TblStudent student = new TblStudent(emailId, user, courseId, "", "", facebookId, fbtz);
 						dao2.add(student);
 						
@@ -252,6 +319,9 @@ public class FacebookLoginAction extends ActionSupport {
 						name = emailId;
 					}
 					
+					
+					
+					System.out.println("added row in score board");
 					iUserID = dao.getUserID(emailId);
 					inviteDAO.updateReferralStatus(1, emailId, siteUrl, name);
 					parameters.initializeParapeters(iUserID, TblUserType.USER_STUDENT, fbtz);
@@ -262,7 +332,6 @@ public class FacebookLoginAction extends ActionSupport {
 					request.setAttribute("UserType", 3);
 					request.setAttribute("clLink", clLink);
 					request.setAttribute("FBSignUp",1);
-					request.setAttribute("courseValue", courseValue);
 					request.setAttribute("facebookId", facebookId);
 					request.setAttribute("emailId",emailId);
 					request.setAttribute("firstName",firstName);
