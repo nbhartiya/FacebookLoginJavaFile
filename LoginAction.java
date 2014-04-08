@@ -67,7 +67,6 @@ public class LoginAction extends ActionSupport {
 	
 	// login action
 	public String doLogin() throws Exception {
-		
 		Logs.printInfoLog(className, "Inside doLogin() method");
 		HttpServletRequest request = ServletActionContext.getRequest();
 		UserDAO userD = new UserDAO();
@@ -89,7 +88,6 @@ public class LoginAction extends ActionSupport {
 			Logs.printInfoLog(className, "Inside try block of doLogin() method");
 			ServletContext context=session.getServletContext();
 			map = userD.checkLogin(userName,EncryptDecrypt.getMessageDigest(password.getBytes()));
-			
 			if (map != null & map.size() > 0) {			
 				Logs.printInfoLog(className, "Correct username and password");
 				iUserID = map.get("iUserId");
@@ -158,8 +156,6 @@ public class LoginAction extends ActionSupport {
 					}
 				}
 				else if (iTypeId == TblUserType.USER_STUDENT){
-					
-					
 					String clLink = "index.jsp?opencl=yes";
 					if(request.getServerPort()==80 || request.getServerPort()==443){
 						clLink=request.getScheme()+"://"+request.getServerName()+request.getContextPath()+"/"+clLink;
@@ -204,7 +200,7 @@ public class LoginAction extends ActionSupport {
 							updateLoginHistory( iUserID,timeZoneId);
 						}*/
 						request.setAttribute("Step",3);
-						//updateLoginHistory( iUserID,timeZoneId);
+						updateLoginHistory( iUserID,timeZoneId);
 					} catch (Exception ex) {
 						Logs.printErrorLog(className, ex.getMessage());
 						addActionError("Login failed. Please try again!");
@@ -246,7 +242,6 @@ public class LoginAction extends ActionSupport {
 			Logs.printErrorLog(className, e.getMessage());
 			return SUCCESS;
 		}
-		
 		return SUCCESS;
 	}
 	
