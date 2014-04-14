@@ -16,6 +16,7 @@ var _gaq = _gaq || [];
 	  
 	  //header
 	  if(typeof mixpanel != 'undefined'){
+		  
 	 mixpanel.track_links(".freeLessonHeader ul li a", "LessonInHeader Link", function(ele) { return { type: $(ele).attr('href')}});
 	 mixpanel.track_links(".skypeLessonHeader a", "SkypeInHeader Link", function(ele) { return { type: $(ele).attr('href')}});
 	 mixpanel.track_links(".askAQuestionDivHeaderLi ul li a", "ForumInHeader Link", function(ele) { return { type: $(ele).attr('href')}});
@@ -37,7 +38,8 @@ var _gaq = _gaq || [];
 	 mixpanel.track_links(".AboutUsInFooterForAnalytics li a", "AboutUsInFooter Link", function(ele) { return { type: $(ele).attr('href')}});
 	 mixpanel.track_links(".SpreadTheLoveInFooterForAnalytics li a", "SpreadTheLoveInFooter Link", function(ele) { return { type: $(ele).attr('href')}});
 	 mixpanel.track_links(".DictionaryInFooterForAnalytics li a", "DictionaryInFooter Link", function(ele) { return { type: $(ele).attr('href')}});
-	  }
+
+	}
 });
 	  
 
@@ -78,6 +80,17 @@ $(function() {
 			}
 		}
 	}
+	
+	//Show Twitter banner per session for Mobile
+	if( /Android|webOS|iPhone|iPod|iPad|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+		var isFirstTime = getCookie("twitterBannerCookie");
+		if (isFirstTime!=null && isFirstTime!="" ){
+			$(".newAppNotification").css("display","none");
+		}else{
+			newCookie("twitterBannerCookie","1",1);
+		}
+	}
+	
 });
 function doSearch(loginFlag) {
 	if (val.trim() != "") {
@@ -603,6 +616,8 @@ function getCookie(c_name)
 
 function parseLoginResult(doc)
 {
+		
+
 	var userType=$(doc).find("userType").text();
 	var accStatus=$(doc).find("accStatus").text();
 	var errorType=$(doc).find("errorType").text();
@@ -611,16 +626,6 @@ function parseLoginResult(doc)
 	var clLink=$(doc).find("clLink").text();
 	var fbLogin=$(doc).find("FBLogin").text();
 	var fbSignUp=$(doc).find("FBSignUp").text();
-
-	newCookie("email",$(doc).find("emailId").text(),365);
-
-
-	if(clLink.indexOf("userDashboard.jsp") >=0)
-		window.location.replace(clLink);
-	else if(clLink.indexOf("facebookPage.jsp") >=0)
-		window.location.replace(clLink)
-
-	
 	
 	var lessonUrl=getCookie("lesson_url");
 	
@@ -722,7 +727,7 @@ function parseLoginResult(doc)
 											if(fbLogin==0 || fbSignUp==0){
 												
 											}else{
-											mixpanel.track("LogIn clicked Successful", {"Method": "Email",version:"2.0"}, function() {});
+											mixpanel.track("LogIn clicked Successful", {"Method": "Email",version:"1.0"}, function() {});
 											var courseValue="";
 											if(course==3){courseValue="Spanish"}else if(course==4){courseValue="Mandarin"}else if(course==2){courseValue="Punjabi"}
 											else if(course==6){courseValue="Hindi"}else if(course==5){courseValue="English"}else if(course==7){courseValue="Korean"}
@@ -735,13 +740,13 @@ function parseLoginResult(doc)
 											        LastName:'',
 											        FBID:'',
 											        EmailID:$("#username").val(),
-											        version:"2.0"
+											        version:"1.0"
 											    });
 											 
 												mixpanel.identify($("#username").val());
 												 mixpanel.people.set({
 													    "$email": $("#username").val(),
-												        version:"2.0"
+												        version:"1.0"
 													});
 										  }
 										}
@@ -756,18 +761,23 @@ function parseLoginResult(doc)
 											else if(course==6){courseValue="Hindi"}else if(course==5){courseValue="English"}else if(course==7){courseValue="Korean"}
 											else if(course==8){courseValue="Japanese"}else if(course==14){courseValue="Italian"}else if(course==15){courseValue="French"}
 										
-											
+
+
 											if(fbLogin==0){
 												
-												
-													setTimeout(function(){
+												setTimeout(function(){
+													if(clLink.indexOf("NewCultureAlley")!= -1)
+														window.location.replace("NewCultureAlley/userDashboard.jsp");
+													else
 														window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=old&&login_signup=login&&fbfirstName="+fbfirstName+"&&fblastName="+fblastName+"&&courseValue="+courseValue);
-														//window.location.replace(clLink)
-													},500);
-
+													//window.location.replace(clLink)
+												},500);
 											}else if(fbSignUp==0){
 												setTimeout(function(){
-													window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=new&&login_signup=signup&&fbfirstName="+fbfirstName+"&&fblastName="+fblastName+"&&courseValue="+courseValue);
+													if(clLink.indexOf("NewCultureAlley")!= -1)
+														window.location.replace("NewCultureAlley/userDashboard.jsp");
+													else
+														window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=new&&login_signup=signup&&fbfirstName="+fbfirstName+"&&fblastName="+fblastName+"&&courseValue="+courseValue);
 													//window.location.replace(clLink)
 												},500);
 											}
@@ -866,7 +876,7 @@ function parseLoginResult(doc)
 							if(fbLogin==1 || fbSignUp==1){
 								
 							}else{
-							mixpanel.track("LogIn clicked Successful", {"Method": "Email",version:"2.0"}, function() {});
+							mixpanel.track("LogIn clicked Successful", {"Method": "Email",version:"1.0"}, function() {});
 							var courseValue="";
 							if(course==3){courseValue="Spanish"}else if(course==4){courseValue="Mandarin"}else if(course==2){courseValue="Punjabi"}
 							else if(course==6){courseValue="Hindi"}else if(course==5){courseValue="English"}else if(course==7){courseValue="Korean"}
@@ -879,13 +889,13 @@ function parseLoginResult(doc)
 							        LastName:'',
 							        FBID:'',
 							        EmailID:$("#username").val(),
-							        version:"2.0"
+							        version:"1.0"
 							    });
 							 
 								mixpanel.identify($("#username").val());
 								 mixpanel.people.set({
 									    "$email": $("#username").val(),
-								        version:"2.0"
+								        version:"1.0"
 									});
 						  }
 						}
@@ -902,12 +912,18 @@ function parseLoginResult(doc)
 						
 							if(fbLogin==1){
 								setTimeout(function(){
-									window.location.replace("success.jsp?method=Facebook&&email="+fbemailId+"&&type=old&&login_signup=login&&fbfirstName="+fbfirstName+"&&fblastName="+fblastName+"&&courseValue="+courseValue);
+									if(clLink.indexOf("NewCultureAlley")!= -1)
+										window.location.replace("NewCultureAlley/userDashboard.jsp");
+									else
+										window.location.replace("success.jsp?method=Facebook&&email="+fbemailId+"&&type=old&&login_signup=login&&fbfirstName="+fbfirstName+"&&fblastName="+fblastName+"&&courseValue="+courseValue);
 									//window.location.replace(clLink)
 								},500);
 							}else if(fbSignUp==1){
 								setTimeout(function(){
-									window.location.replace("success.jsp?method=Facebook&&email="+fbemailId+"&&type=new&&login_signup=signup&&fbfirstName="+fbfirstName+"&&fblastName="+fblastName+"&&courseValue="+courseValue);
+									if(clLink.indexOf("NewCultureAlley")!= -1)
+										window.location.replace("NewCultureAlley/userDashboard.jsp");
+									else
+										window.location.replace("success.jsp?method=Facebook&&email="+fbemailId+"&&type=new&&login_signup=signup&&fbfirstName="+fbfirstName+"&&fblastName="+fblastName+"&&courseValue="+courseValue);
 									//window.location.replace(clLink)
 								},500);
 							}
@@ -953,7 +969,7 @@ function parseLoginResult(doc)
 			openPopUp("loginerrors.jsp?code=0");
 			setTimeout(function(){closePopUp()},4000)
 			if(typeof mixpanel != 'undefined'){
-			mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Server Error",version:"2.0"}, function() {});
+				mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Server Error",version:"1.0"}, function() {});
 			}
 		}
 		else
@@ -966,7 +982,7 @@ function parseLoginResult(doc)
 				openPopUp("loginerrors.jsp?code=1");
 				setTimeout(function(){closePopUp()},4000)
 				if(typeof mixpanel != 'undefined'){
-					mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Password Not Matched",version:"2.0"}, function() {});
+					mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Password Not Matched",version:"1.0"}, function() {});
 				}
 			}
 			
@@ -977,7 +993,7 @@ function parseLoginResult(doc)
 				openPopUp("loginerrors.jsp?code=1");
 				setTimeout(function(){closePopUp()},4000);
 				if(typeof mixpanel != 'undefined'){
-					mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Signup With Facebook",version:"2.0"}, function() {});
+					mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Signup With Facebook",version:"1.0"}, function() {});
 				}
 			}
 			else
@@ -989,7 +1005,7 @@ function parseLoginResult(doc)
 					openPopUp("Signup/signup.jsp?type=student&code=2");
 					setTimeout(function(){$("#errormsg").css("display","none")},4000);
 					if(typeof mixpanel != 'undefined'){
-						mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Not Exists(New User)",version:"2.0"}, function() {});
+						mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Not Exists(New User)",version:"1.0"}, function() {});
 					}
 				}
 			}
@@ -1004,7 +1020,9 @@ function parseLoginResult(doc)
 
 function loginWithFB(){
 	
-	mixpanel.track("LogIn clicked", {"Method": "Facebook","URL":window.location.href,version:"2.0"}, function() {});
+	if(typeof mixpanel != 'undefined')
+		mixpanel.track("LogIn clicked", {"Method": "Facebook","URL":window.location.href,version:"1.0"}, function() {});
+
 	//facebook tracking
 	_gaq.push(['_trackEvent', 'Student_Facebook_SignUp/Login', 'clicked', '']);
 	
@@ -1025,7 +1043,7 @@ function loginWithFB(){
 
 function loginWithGoogle(){
 	
-	mixpanel.track("LogIn clicked", {"Method": "Google","URL":window.location.href,version:"2.0"}, function() {});
+	mixpanel.track("LogIn clicked", {"Method": "Google","URL":window.location.href,version:"1.0"}, function() {});
 	//facebook tracking
 	_gaq.push(['_trackEvent', 'Student_Google_SignUp/Login', 'clicked', '']);
 
@@ -1047,7 +1065,7 @@ function loginWithGoogle(){
 
 function loginWithYahoo(){
 	
-	mixpanel.track("LogIn clicked", {"Method": "Yahoo","URL":window.location.href,version:"2.0"}, function() {});
+	mixpanel.track("LogIn clicked", {"Method": "Yahoo","URL":window.location.href,version:"1.0"}, function() {});
 	//facebook tracking
 	_gaq.push(['_trackEvent', 'Student_Yahoo_SignUp/Login', 'clicked', '']);
 
@@ -1226,7 +1244,7 @@ function doLoginMain(redirectionURL,translatorParameter) {
 		timezone : timezone
 	}, function(doc) {
 		$(".loginNotification").hide();
-		ResultMain(doc,clLink);
+		parseLoginResultMain(doc,clLink);
 		
 	})
 }
@@ -1242,20 +1260,7 @@ function parseLoginResultMain(doc,clLink)
 	var fbLogin=$(doc).find("FBLogin").text();
 	var fbSignUp=$(doc).find("FBSignUp").text();
 	
-	
-	
-	
 	var lessonUrl=getCookie("lesson_url");
-	
-	
-	newCookie("email",$(doc).find("emailId").text(),365);
-	
-	if(clLink.indexOf("userDashboard.jsp") >=0)
-		window.location.replace(clLink);
-	else if(clLink.indexOf("facebookPage.jsp") >=0)
-		window.location.replace(clLink)
-
-	
 	
 	if (lessonUrl!=null && lessonUrl!="" )
 	{
@@ -1313,7 +1318,7 @@ function parseLoginResultMain(doc,clLink)
 					
 						_gaq.push(['_trackEvent', 'Tutor_Facebook_Login', 'successful','']);
 						if(typeof mixpanel != 'undefined'){
-							mixpanel.track("LogIn clicked Successful", {"Method": "Facebook",version:"2.0"}, function() {});
+							mixpanel.track("LogIn clicked Successful", {"Method": "Facebook",version:"1.0"}, function() {});
 							
 							var fbemailId=$(doc).find("emailId").text();
 							var fbfirstName=$(doc).find("firstName").text();
@@ -1331,12 +1336,12 @@ function parseLoginResultMain(doc,clLink)
 							        LastName:fblastName,
 							        FBID:'',
 							        EmailID:fbemailId,
-							        version:"2.0"
+							        version:"1.0"
 							    });
 							 mixpanel.identify(fbemailId);
 								mixpanel.people.set({
 								    "$email": fbemailId,
-							        version:"2.0"
+							        version:"1.0"
 								});
 						}
 					}
@@ -1344,7 +1349,7 @@ function parseLoginResultMain(doc,clLink)
 					{
 						_gaq.push(['_trackEvent', 'Tutor_Facebook_SignUp', 'successful','']);
 						if(typeof mixpanel != 'undefined'){
-							mixpanel.track("Register clicked Successful", {"Method": "Facebook",version:"2.0"}, function() {});
+							mixpanel.track("Register clicked Successful", {"Method": "Facebook",version:"1.0"}, function() {});
 							
 							var fbemailId=$(doc).find("emailId").text();
 							var fbfirstName=$(doc).find("firstName").text();
@@ -1362,12 +1367,12 @@ function parseLoginResultMain(doc,clLink)
 							        LastName:fblastName,
 							        FBID:'',
 							        EmailID:fbemailId,
-							        version:"2.0"
+							        version:"1.0"
 							    });
 							 mixpanel.identify(fbemailId);
 								mixpanel.people.set({
 								    "$email": fbemailId,
-							        version:"2.0"
+							        version:"1.0"
 								});
 						}
 					}
@@ -1401,13 +1406,11 @@ function parseLoginResultMain(doc,clLink)
 									}
 									else{
 										
-										saveAutoLogIn();
-										
 										if(typeof mixpanel != 'undefined'){
 											if(fbLogin==0 || fbSignUp==0){
 												
 											}else{
-											mixpanel.track("LogIn clicked Successful", {"Method": "Email",version:"2.0"}, function() {});
+											mixpanel.track("LogIn clicked Successful", {"Method": "Email",version:"1.0"}, function() {});
 											
 											var courseValue="";
 											if(course==3){courseValue="Spanish"}else if(course==4){courseValue="Mandarin"}else if(course==2){courseValue="Punjabi"}
@@ -1421,25 +1424,36 @@ function parseLoginResultMain(doc,clLink)
 											        LastName:'',
 											        FBID:'',
 											        EmailID:$("#username").val(),
-											        version:"2.0"
+											        version:"1.0"
 											    });
 											 mixpanel.identify($("#username").val());
 												mixpanel.people.set({
 												    "$email": $("#username").val(),
-											        version:"2.0"
+											        version:"1.0"
 												});
 											}
 										}
 										
 										if(fbLogin==0 || fbSignUp==0){
+											
+										
+											
 											if(fbLogin==0){
-													setTimeout(function(){
-														window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=new&&login_signup=signup");
-														//window.location.replace(clLink)
-													},500);
-											}else if(fbSignUp==0){
+																								
 												setTimeout(function(){
-													window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=new&&login_signup=signup");
+													if(clLink.indexOf("NewCultureAlley")!= -1)
+														window.location.replace("NewCultureAlley/userDashboard.jsp");
+													else
+														window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=old&&login_signup=login");
+													//window.location.replace(clLink)
+												},500);
+											}else if(fbSignUp==0){
+												
+												setTimeout(function(){
+													if(clLink.indexOf("NewCultureAlley")!= -1)
+														window.location.replace("NewCultureAlley/userDashboard.jsp");
+													else
+														window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=new&&login_signup=signup");
 													//window.location.replace(clLink)
 												},500);
 											}
@@ -1504,7 +1518,7 @@ function parseLoginResultMain(doc,clLink)
 				{
 					_gaq.push(['_trackEvent', 'Student_Facebook_SignUp/Login', 'Login successful','']);
 					if(typeof mixpanel != 'undefined'){
-						mixpanel.track("LogIn clicked Successful", {"Method": "Facebook",version:"2.0"}, function() {});
+						mixpanel.track("LogIn clicked Successful", {"Method": "Facebook",version:"1.0"}, function() {});
 						var courseValue="";
 						if(course==3){courseValue="Spanish"}else if(course==4){courseValue="Mandarin"}else if(course==2){courseValue="Punjabi"}
 						else if(course==6){courseValue="Hindi"}else if(course==5){courseValue="English"}else if(course==7){courseValue="Korean"}
@@ -1522,12 +1536,12 @@ function parseLoginResultMain(doc,clLink)
 						        LastName:fblastName,
 						        FBID:'',
 						        EmailID:fbemailId,
-						        version:"2.0"
+						        version:"1.0"
 						    });
 						 mixpanel.identify(fbemailId);
 							mixpanel.people.set({
 							    "$email": fbemailId,
-						        version:"2.0"
+						        version:"1.0"
 							});
 					}
 				}
@@ -1538,7 +1552,7 @@ function parseLoginResultMain(doc,clLink)
 
 					_gaq.push(['_trackEvent', 'Student_Facebook_SignUp/Login', 'SignUp successful','']);
 					if(typeof mixpanel != 'undefined'){
-						mixpanel.track("Register clicked Successful", {"Method": "Facebook",version:"2.0"}, function() {});
+						mixpanel.track("Register clicked Successful", {"Method": "Facebook",version:"1.0"}, function() {});
 						var courseValue="";
 						var fbemailId=$(doc).find("emailId").text();
 						var fbfirstName=$(doc).find("firstName").text();
@@ -1556,12 +1570,12 @@ function parseLoginResultMain(doc,clLink)
 						        LastName:fblastName,
 						        FBID:'',
 						        EmailID:fbemailId,
-						        version:"2.0"
+						        version:"1.0"
 						    });
 						 mixpanel.identify(fbemailId);
 							mixpanel.people.set({
 							    "$email": fbemailId,
-						        version:"2.0"
+						        version:"1.0"
 							});
 					}
 				}
@@ -1598,10 +1612,8 @@ function parseLoginResultMain(doc,clLink)
 							if(fbLogin==1 || fbSignUp==1){
 								
 							}else{
-							
-							saveAutoLogIn();
 								
-							mixpanel.track("LogIn clicked Successful", {"Method": "Email",version:"2.0"}, function() {});
+								mixpanel.track("LogIn clicked Successful", {"Method": "Email",version:"1.0"}, function() {});
 							var courseValue="";
 							if(course==3){courseValue="Spanish"}else if(course==4){courseValue="Mandarin"}else if(course==2){courseValue="Punjabi"}
 							else if(course==6){courseValue="Hindi"}else if(course==5){courseValue="English"}else if(course==7){courseValue="Korean"}
@@ -1615,25 +1627,33 @@ function parseLoginResultMain(doc,clLink)
 							        LastName:'',
 							        FBID:'',
 							        EmailID:$("#username").val(),
-							        version:"2.0"
+							        version:"1.0"
 							    });
 							 mixpanel.identify($("#username").val());
 							 mixpanel.people.set({
 								    "$email": $("#username").val(),
-							        version:"2.0"
+							        version:"1.0"
 								});
 						 }
 						}
 						
 						if(fbLogin==1 || fbSignUp==1){
+							
+							
 							if(fbLogin==1){
 								setTimeout(function(){
-									window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=old&&login_signup=login");
+									if(clLink.indexOf("NewCultureAlley")!= -1)
+										window.location.replace("NewCultureAlley/userDashboard.jsp");
+									else
+										window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=old&&login_signup=login");
 									//window.location.replace(clLink)
 								},500);
 							}else if(fbSignUp==1){
 								setTimeout(function(){
-									window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=new&&login_signup=signup");
+									if(clLink.indexOf("NewCultureAlley")!= -1)
+										window.location.replace("NewCultureAlley/userDashboard.jsp");
+									else
+										window.location.replace("success.jsp?method=Facebook&&email="+$(doc).find("emailId").text()+"&&type=new&&login_signup=signup");
 									//window.location.replace(clLink)
 								},500);
 							}
@@ -1682,7 +1702,7 @@ function parseLoginResultMain(doc,clLink)
 			openPopUp("loginerrors.jsp?code=0");
 			setTimeout(function(){closePopUp()},4000)
 			if(typeof mixpanel != 'undefined'){
-				mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Server Error"}, function() {});
+				mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Server Error",version:"1.0"}, function() {});
 				
 			}
 		}
@@ -1696,7 +1716,7 @@ function parseLoginResultMain(doc,clLink)
 				openPopUp("loginerrors.jsp?code=1");
 				setTimeout(function(){closePopUp()},4000)
 				if(typeof mixpanel != 'undefined'){
-					mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Password Not Matched"}, function() {});
+					mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Password Not Matched",version:"1.0"}, function() {});
 				}
 			}
 			
@@ -1707,7 +1727,7 @@ function parseLoginResultMain(doc,clLink)
 				openPopUp("loginerrors.jsp?code=1");
 				setTimeout(function(){closePopUp()},4000);
 				if(typeof mixpanel != 'undefined'){
-					mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Signup With Facebook"}, function() {});
+					mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Signup With Facebook",version:"1.0"}, function() {});
 				}
 			}
 			else
@@ -1719,7 +1739,7 @@ function parseLoginResultMain(doc,clLink)
 					
 					showEleCommon("notRegisteredUser");
 					if(typeof mixpanel != 'undefined'){
-						mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Not Exists(New User)"}, function() {});
+						mixpanel.track("LogIn clicked UnSuccessful", {"Method": "Email","Error":"Username Not Exists(New User)",version:"1.0"}, function() {});
 					}
 				}
 			}
@@ -1749,7 +1769,7 @@ function sendFormDataMain(type) {
 						$("#emailExist").html("Email id already registered. <a style='color:#bd1550;text-decoration:underline;font-size:16px;' href='loginMain.jsp?&&loginemail'>Log in</a> here");
 						$("#emailExist").show();
 						if(typeof mixpanel != 'undefined'){
-							mixpanel.track("Register clicked UnSuccessful", {"Method": "Email","Error":"Email Already Exists"}, function() {});
+							mixpanel.track("Register clicked UnSuccessful", {"Method": "Email","Error":"Email Already Exists",version:"1.0"}, function() {});
 						}
 						if(type == "tutor")
 							_gaq.push(['_trackEvent', 'Teacher_Email_signUp ', ' Teacher_got_an_error_after_JetSetGo', 'Emails already exists']);
@@ -1767,7 +1787,7 @@ function sendFormDataMain(type) {
 						$("#emailExist").html("Email id already registered. <a style='color:#bd1550;text-decoration:underline;font-size:16px;' href='loginMain.jsp?&&loginemail'>Log in</a> here");
 						$("#emailExist").show();
 						if(typeof mixpanel != 'undefined'){
-							mixpanel.track("Register clicked UnSuccessful", {"Method": "Email","Error":"Email Already Exists"}, function() {});
+							mixpanel.track("Register clicked UnSuccessful", {"Method": "Email","Error":"Email Already Exists",version:"1.0"}, function() {});
 							
 						}
 						_gaq.push(['_trackEvent', 'General_Email_signUp', 'SignUp_failed', 'Emails already exists thorugh facebook']);
@@ -1821,11 +1841,13 @@ function submitFormCompleteDataMain(type) {
 				        FirstName:'',
 				        LastName:'',
 				        FBID:'',
-				        EmailID:email
+				        EmailID:email,
+				        version:"1.0"
 				    });
 				 mixpanel.identify(email);
 				 mixpanel.people.set({
-					    "$email": email    
+					    "$email": email,
+					    version:"1.0"
 					});
 					}
 				}
@@ -1839,16 +1861,18 @@ function submitFormCompleteDataMain(type) {
 				        FirstName:'',
 				        LastName:'',
 				        FBID:'',
-				        EmailID:email
+				        EmailID:email,
+				        version:"1.0"
 				    });
 				 mixpanel.identify(email);
 				 mixpanel.people.set({
-					    "$email": email    
+					    "$email": email,
+					    version:"1.0"
 					});
 					}
 				}
 				if(typeof mixpanel != 'undefined'){
-					mixpanel.track("Register clicked Successful", {"Method": "Email"}, function() {});
+					mixpanel.track("Register clicked Successful", {"Method": "Email",version:"1.0"}, function() {});
 				}
 				$(".loginNotification").hide();
 				$("#loadPage").html(doc);
@@ -1866,6 +1890,7 @@ function doDirectLoginMain(email,course) {
 	$.post(url, {
 		userName : email
 	}, function(doc) {
+		
 		/*
 		if(course== "Spanish" || course == "spanish")
 			window.location = "//culturealley.com/spanish";
@@ -1903,32 +1928,16 @@ function loginWithTwitterForWordList(){
 
 //function for auto login
 function newCookie(name, value, days) {
-		
-	days = (days == undefined)? 30 : days;
-	
-	var date = new Date();
-	date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-	var expires = "; expires=" + date.toGMTString();
-
-	if(name === "lastTask") {
-				
-		var lastTask = readCookie("lastTask");
-		lastTask = (lastTask == undefined)? []: (lastTask.charAt(0) == '[')? $.parseJSON(lastTask): [lastTask];
-		var doesLastTaskAlreadyExist = false;
-		$.each(lastTask, function(i, v) {
-			if(v == value)
-				doesLastTaskAlreadyExist = true;
-		});
-		if(doesLastTaskAlreadyExist) {
-			return;
-		}
-		lastTask.push(value);
-		value = JSON.stringify(lastTask);
+	var days = 30;
+	if (days) {
+		var date = new Date();
+		date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+		var expires = "; expires=" + date.toGMTString();
+	} else {
+		var expires = "";
 	}
-	
 	document.cookie = name + "=" + value + expires + "; path=/";
 }
-
 function readCookie(name) {
 	var nameSG = name + "=";
 	var nuller = "";
@@ -1948,8 +1957,13 @@ function readCookie(name) {
 	return null;
 }
 
-function saveAutoLogIn(){
-		newCookie("isLoggedIn","1",365);	
+function saveAutoLogIn(emailId){
+	
+	if(emailId != null && emailId!=""){
+		newCookie("isLoggedIn","1",365);
+		newCookie("emailId",emailId,365);
+	}
+	
 }
 
 function saveAutoLogOut(){
@@ -1961,27 +1975,41 @@ function doAutoLogin(){
 	var loginStatus = readCookie("isLoggedIn");
 	if(loginStatus != null && loginStatus != "" && loginStatus != "0"){
 		
-		var email = readCookie("email");
-		var password = readCookie("password");
+		var emailId = readCookie("emailId");
 		
-		if(email != null && email != "" && email != "0" && password != null && password != "" && password != "0"){
+		if(emailId != null && emailId != "" && emailId != "0"){
 				
-			var date = new Date();
-			var MILISEC_PRE_HOUR = 60 * 60 * 1000;
-			var offset = (-(date.getTimezoneOffset() / 60) * MILISEC_PRE_HOUR);
-			var tz = jstz.determine();
-			var timezone = tz.name();
-			var url = "dologin.action";
+			var url = "dodirectlogin.action";
 			$.post(url, {
-				userName : email,
-				password : password,
-				timeZoneOffset : offset,
-				timezone : timezone
+				userName : emailId
 			}, function(doc) {
-				window.location.reload(false);
+				parseLoginResultAutoLogin(doc);
 			});
-
-
 		}
 	}
 }
+
+function parseLoginResultAutoLogin(doc)
+{
+	var clLink = "userDashboard.jsp";
+	var userType=$(doc).find("userType").text();
+	var step=$(doc).find("step").text();
+			
+	if(userType=="1"){
+		window.location = "home.action";
+	}
+	else if(userType=="2")
+	{	
+		if(step=="3"){
+			window.location = clLink;			
+		}
+	}	
+	else if(userType=="3")
+	{			
+		if(step=="3"){
+			window.location = clLink;
+		}
+	}
+}
+			
+
